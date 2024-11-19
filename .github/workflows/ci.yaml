@@ -24,4 +24,4 @@ jobs:
               - 'connectors/**'
 
       - name: Read output
-        run: ${{ steps.filter.outputs.frontend }}
+        run: echo "${{ steps.filter.outputs.frontend }}"
