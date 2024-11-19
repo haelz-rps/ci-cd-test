@@ -8,6 +8,8 @@ on:
 jobs:
   changed_files:
     runs-on: ubuntu-latest
+    outputs:
+      output1: ${{ steps.changes.outputs.dir }}
     name: Test changed-files
     steps:
       - uses: actions/checkout@v4
@@ -30,9 +32,13 @@ jobs:
           # Captura os arquivos modificados
           git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
           # Extraindo apenas o nome entre as barras (diretório base)
+          {
+          echo 'PATH<<EOF'
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-          echo "dir=$dir" >> $GITHUB_OUTPUT
+          echo EOF
+          } >> "$GITHUB_ENV"
+
       - name: Show changed directories or files
         run: |
           echo "Arquivos ou diretórios alterados:"
-          echo "${{ steps.changes.outputs.dir  }}"
+          echo $PATH
