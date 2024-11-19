@@ -3,25 +3,28 @@ name: Conditional Deploy
 on: push
 
 jobs:
-  # JOB to run change detection
-  changes:
+  identify-changed-paths:
     runs-on: ubuntu-latest
-    # Required permissions
-    permissions:
-      pull-requests: read
-    # Set job outputs to values from filter step
-    outputs:
-      backend: ${{ steps.changes.outputs.backend }}
-      frontend: ${{ steps.changes.outputs.frontend }}
+
     steps:
-      - uses: actions/checkout@v2
+      - name: Check out repository
+        uses: actions/checkout@v3
 
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            connectors:
-              - 'connectors/**'
+      - name: Get list of changed files
+        id: changed-files
+        run: |
+          # Lista os arquivos alterados para o evento atual
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+          # Adiciona a lista como saída do job
+          echo "changed_files=$(cat changed_files.txt | tr '\n' ',')" >> $GITHUB_ENV
 
-      - name: Read output
-        run: echo "${{ steps.changes.outputs.frontend }}"
+      - name: Show changed paths
+        run: |
+          echo "Arquivos alterados:"
+          echo "${{ env.changed_files }}"
+
+      - name: Exemplo de uso do path
+        run: |
+          for file in $(echo ${{ env.changed_files }} | tr ',' '\n'); do
+            echo "Processando arquivo: $file"
+          done
