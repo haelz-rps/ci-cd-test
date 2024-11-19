@@ -41,4 +41,4 @@ jobs:
       - name: Show changed directories or files
         run: |
           echo "Arquivos ou diretórios alterados:"
-          echo $PATH
+          echo ${{ env.PATH }}
