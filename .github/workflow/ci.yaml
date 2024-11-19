@@ -1,0 +1,27 @@
+name: Conditional Deploy
+
+on: push
+
+jobs:
+  # JOB to run change detection
+  changes:
+    runs-on: ubuntu-latest
+    # Required permissions
+    permissions:
+      pull-requests: read
+    # Set job outputs to values from filter step
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: dorny/paths-filter@v3
+        id: changes
+        with:
+          filters: |
+            connectors:
+              - 'connectors/**'
+
+      - name: Read output
+        run: ${{ steps.filter.outputs.frontend }}
