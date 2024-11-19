@@ -36,9 +36,9 @@ jobs:
           echo 'PATH<<EOF'
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo EOF
-          } >> "$GITHUB_ENV"
+          } >> $GITHUB_OUTPUT
 
       - name: Show changed directories or files
         run: |
           echo "Arquivos ou diretórios alterados:"
-          echo $PATH
+          ${{ steps.changes.outputs.PATH }}
