@@ -31,8 +31,8 @@ jobs:
           git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
           # Extraindo apenas o nome entre as barras (diretório base)
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-          echo "dir=$dir" >> $GITHUB_ENV
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
       - name: Show changed directories or files
         run: |
           echo "Arquivos ou diretórios alterados:"
-          echo $dir
+          echo ${{ steps.changes.outputs.dir }}
