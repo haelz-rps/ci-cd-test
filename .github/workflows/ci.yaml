@@ -39,7 +39,7 @@ jobs:
         run: poetry run pytest --html=report-unit-test.html unit_tests 
         working-directory: ./connectors/${{ env.dir }}
       - name: Upload Test Result
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: report-unit-test.html
           path: ./connectors/${{ env.dir }}
