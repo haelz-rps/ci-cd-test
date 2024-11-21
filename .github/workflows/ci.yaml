@@ -31,6 +31,6 @@ jobs:
         with:
           python-version: '3.9'
       - name: Install poetry
-        run: pipx install poetry
+        run: pipx install poetry pytest
       - name: Run Poetry
         run: poetry -C connectors/${{ env.dir }} run pytest unit_tests 
