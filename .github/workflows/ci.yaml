@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
     name: Test changed-files
     steps:
-      - uses: actions/checkout@v4
+      - name: Setup Git
+        uses: actions/checkout@v4
         with:
           fetch-depth: 2
-
       - name: Get list of changed files
         id: changes
         run: |
@@ -26,5 +26,9 @@ jobs:
         run: |
           echo "Arquivos ou diretórios alterados:"
           echo "${{ env.dir }}"
-      - name: Test command
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+      - name: Run Poetry
         run: poetry
