@@ -33,4 +33,5 @@ jobs:
       - name: Install poetry
         run: pipx install poetry pytest
       - name: Run Poetry
-        run: poetry -C connectors/${{ env.dir }} run pytest unit_tests 
+        run: poetry run pytest unit_tests 
+        working-directory: ./connectors/${{ env.dir }}
