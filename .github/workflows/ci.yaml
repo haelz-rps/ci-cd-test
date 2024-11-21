@@ -2,8 +2,8 @@ name: CI
 
 on: 
   push:
-    paths:
-      - connectors/**
+    # paths:
+    #   - connectors/**
 
 jobs:
   changed_files:
@@ -26,3 +26,5 @@ jobs:
         run: |
           echo "Arquivos ou diretórios alterados:"
           echo "${{ env.dir }}"
+      - name: Test command
+        run: poetry
