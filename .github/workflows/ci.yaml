@@ -2,8 +2,8 @@ name: CI
 
 on: 
   push:
-    # paths:
-    #   - connectors/**
+    paths:
+      - connectors/**
 
 jobs:
   changed_files:
@@ -33,4 +33,4 @@ jobs:
       - name: Install poetry
         run: pipx install poetry
       - name: Run Poetry
-        run: poetry
+        run: poetry -C connectors/${{ env.dir }} run pytest unit_tests 
