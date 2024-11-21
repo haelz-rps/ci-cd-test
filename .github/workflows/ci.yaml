@@ -36,5 +36,5 @@ jobs:
         run: poetry install
         working-directory: ./connectors/${{ env.dir }}
       - name: Run Poetry Tests
-        run: poetry run pytest unit_tests 
+        run: poetry run pytest --html=report.html unit_tests 
         working-directory: ./connectors/${{ env.dir }}

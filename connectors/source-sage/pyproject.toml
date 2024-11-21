@@ -25,5 +25,5 @@ source-sage = "source_sage.run:run"
 requests-mock = "*"
 pytest-mock = "*"
 pytest = "*"
-
+pytest-html = "*"
 
