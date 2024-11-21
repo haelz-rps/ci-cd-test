@@ -32,7 +32,9 @@ jobs:
           python-version: '3.9'
       - name: Install poetry
         run: pipx install poetry pytest
+      - name: Poetry Install Dependencies
+        run: poetry install
         working-directory: ./connectors/${{ env.dir }}
-      - name: Run Poetry
+      - name: Run Poetry Tests
         run: poetry run pytest unit_tests 
         working-directory: ./connectors/${{ env.dir }}
