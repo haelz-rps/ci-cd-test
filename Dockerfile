@@ -2,9 +2,11 @@ FROM python:3.11-alpine
 
 ARG SOURCE
 
-COPY ./connectors/$SOURCE /airbyte/integration_code
+COPY ./connectors/source-sage /airbyte/integration_code
 
 WORKDIR /airbyte/integration_code/
+
+RUN ls -la /airbyte/integration_code/
 
 RUN pip install .
 
