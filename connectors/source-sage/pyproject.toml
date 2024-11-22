@@ -26,3 +26,4 @@ requests-mock = "*"
 pytest-mock = "*"
 pytest = "*"
 pytest-html = "*"
+
