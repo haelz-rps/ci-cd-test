@@ -2,6 +2,8 @@ name: CI
 
 on: 
   push:
+    paths:
+      - connectors/**
 
 jobs:
   changed_files:
@@ -49,4 +51,4 @@ jobs:
           build-args: |
             ${{ env.dir }}
           tags: |
-            882490700787.dkr.ecr.us-east-1.amazonaws.com/connector-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
+            882490700787.dkr.ecr.us-east-1.amazonaws.com/connectors-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
