@@ -52,7 +52,6 @@ jobs:
           platforms: "linux/arm64"
           context: .
           push: true
-          build-args: |
-            ${{ env.dir }}
+          build-args: ${{ env.dir }}
           tags: |
             882490700787.dkr.ecr.us-east-1.amazonaws.com/connectors-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
