@@ -25,6 +25,13 @@ jobs:
         run: |
           echo "Arquivos ou diretórios alterados:"
           echo "${{ env.dir }}"
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1-node16
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::882490700787:role/connectors-source-sage-ghactionsopenid
+          role-session-name: GithubActionsSession
+  
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
