@@ -1,8 +1,6 @@
-ARG SOURCE
-
 FROM python:3.11-alpine
 
-ARG SOURCE=$SOURCE
+ARG SOURCE
 
 WORKDIR /airbyte/integration_code/
 
