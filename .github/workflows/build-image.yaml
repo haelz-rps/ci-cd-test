@@ -10,6 +10,9 @@ jobs:
     steps:
       - name: Setup Git
         uses: actions/checkout@v4
+        with:
+            fetch-depth: 2
+  
       - name: Get list of changed files
         id: changes
         run: |
