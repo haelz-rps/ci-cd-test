@@ -26,26 +26,34 @@ jobs:
           # Extraindo apenas o nome entre as barras (diretório base)
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo "dir=$dir" >> "$GITHUB_ENV"
+          
       - name: Show changed directories or files
         run: |
           echo "Arquivos ou diretórios alterados:"
           echo "${{ env.dir }}"
+
       - name: Set GITHUB_RUN_NUMBER
         id: set_github_run_number
         run: |
           echo GITHUB_RUN_NUMBER=$(( GITHUB_RUN_NUMBER + 279 ))>> $GITHUB_ENV
           echo "outtag=$((GITHUB_RUN_NUMBER + 279))" >> $GITHUB_OUTPUT
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           aws-region: us-east-1
           role-to-assume: arn:aws:iam::882490700787:role/connectors-source-sage-ghactionsopenid
           role-session-name: GithubActionsSession
+
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1      
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
       - name: Build and push
         uses: docker/build-push-action@v6.9.0
         with:
