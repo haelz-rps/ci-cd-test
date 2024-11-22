@@ -6,8 +6,11 @@ on:
       - connectors/**
 
 jobs:
-  changed_files:
+  Unit-Test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-type: [unit, integration]
     name: Test changed-files
     steps:
       - name: Setup Git
@@ -35,11 +38,22 @@ jobs:
       - name: Poetry Install Dependencies
         run: poetry install
         working-directory: ./connectors/${{ env.dir }}
-      - name: Run Poetry Tests
-        run: poetry run pytest --html=report-unit-test.html unit_tests 
+
+      - name: Executar testes ${matrix.test-type}
+        run: |
+          if [ "${matrix.test-type}" == "unit" ]; then
+            echo "Rodando testes unitários...";
+            poetry run pytest --html=report-unit_tests.html unit_tests
+          elif [ "${matrix.test-type}" == "integration" ]; then
+            echo "Rodando testes de integração...";
+            poetry run pytest --html=report-integration_tests.html integration_tests
+          fi
         working-directory: ./connectors/${{ env.dir }}
-      - name: Upload Test Result
-        uses: actions/upload-artifact@v4
-        with:
-          name: report-unit-test.html
-          path: ./connectors/${{ env.dir }}
+      # - name: Run Poetry Tests
+      #   run: poetry run pytest --html=report-unit-test.html unit_tests 
+      #   working-directory: ./connectors/${{ env.dir }}
+      # - name: Upload Test Result
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: report-unit-test.html
+      #     path: ./connectors/${{ env.dir }}
