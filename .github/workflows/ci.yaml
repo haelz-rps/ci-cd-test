@@ -41,10 +41,10 @@ jobs:
 
       - name: Executar testes ${matrix.test-type}
         run: |
-          if [ "${matrix.test-type}" == "unit" ]; then
+          if [ "${{matrix.test-type}}" == "unit" ]; then
             echo "Rodando testes unitários...";
             poetry run pytest --html=report-unit_tests.html unit_tests
-          elif [ "${matrix.test-type}" == "integration" ]; then
+          elif [ "${{matrix.test-type}}" == "integration" ]; then
             echo "Rodando testes de integração...";
             poetry run pytest --html=report-integration_tests.html integration_tests
           fi
