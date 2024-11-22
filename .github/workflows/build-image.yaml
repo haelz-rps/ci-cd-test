@@ -40,3 +40,13 @@ jobs:
         with:
             role-to-assume: arn:aws:iam::882490700787:role/connectors-source-sage-ghactionsopenid
             aws-region: us-east-1
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          platforms: "linux/arm64"
+          context: .
+          push: true
+          build-args: |
+            ${{ env.dir }}
+          tags: |
+            882490700787.dkr.ecr.us-east-1.amazonaws.com/connector-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
