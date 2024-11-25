@@ -8,7 +8,7 @@ on:
       - main
 
 jobs:
-  changed_files:
+  build_image:
     runs-on: ubuntu-latest
     name: Build Image
     permissions:
@@ -49,6 +49,7 @@ jobs:
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
+        
       - name: Build and push
         uses: docker/build-push-action@v6.9.0
         with:
@@ -57,4 +58,4 @@ jobs:
           push: true
           build-args: SOURCE=${{ env.dir }}
           tags: |
-            882490700787.dkr.ecr.us-east-1.amazonaws.com/connectors-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
+            882490700787.dkr.ecr.us-east-1.amazonaws.com/connector-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
