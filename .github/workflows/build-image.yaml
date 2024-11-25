@@ -1,14 +1,16 @@
-name: CI
+name: Build Image
 
 on: 
   push:
     paths:
       - connectors/**
+    branches:
+      - main
 
 jobs:
   changed_files:
     runs-on: ubuntu-latest
-    name: Test changed-files
+    name: Build Image
     permissions:
         id-token: write
         contents: read
@@ -21,16 +23,9 @@ jobs:
       - name: Get list of changed files
         id: changes
         run: |
-          # Captura os arquivos modificados
           git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
-          # Extraindo apenas o nome entre as barras (diretório base)
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo "dir=$dir" >> "$GITHUB_ENV"
-          
-      - name: Show changed directories or files
-        run: |
-          echo "Arquivos ou diretórios alterados:"
-          echo "${{ env.dir }}"
 
       - name: Set GITHUB_RUN_NUMBER
         id: set_github_run_number
@@ -42,7 +37,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4.0.2
         with:
           aws-region: us-east-1
-          role-to-assume: arn:aws:iam::882490700787:role/connectors-source-sage-ghactionsopenid
+          role-to-assume: arn:aws:iam::882490700787:role/connector-${{ env.dir }}-ghactionsopenid
           role-session-name: GithubActionsSession
 
       - name: Login to Amazon ECR

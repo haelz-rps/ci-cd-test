@@ -1,4 +1,4 @@
-name: CI
+name: CI - Connectors Tests
 
 on: 
   push:
@@ -11,49 +11,37 @@ jobs:
     strategy:
       matrix:
         test-type: [unit, integration]
-    name: Test changed-files
+    name: Connectors Tests
     steps:
       - name: Setup Git
         uses: actions/checkout@v4
         with:
           fetch-depth: 2
+
       - name: Get list of changed files
         id: changes
         run: |
-          # Captura os arquivos modificados
           git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
-          # Extraindo apenas o nome entre as barras (diretório base)
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo "dir=$dir" >> "$GITHUB_ENV"
-      - name: Show changed directories or files
-        run: |
-          echo "Arquivos ou diretórios alterados:"
-          echo "${{ env.dir }}"
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
+
       - name: Install poetry
         run: pipx install poetry pytest
+
       - name: Poetry Install Dependencies
         run: poetry install
         working-directory: ./connectors/${{ env.dir }}
 
-      - name: Executar testes ${matrix.test-type}
+      - name: Run tests ${{matrix.test-type}}
         run: |
           if [ "${{matrix.test-type}}" == "unit" ]; then
-            echo "Rodando testes unitários...";
             poetry run pytest --html=report-unit_tests.html unit_tests
           elif [ "${{matrix.test-type}}" == "integration" ]; then
-            echo "Rodando testes de integração...";
             poetry run pytest --html=report-integration_tests.html integration_tests
           fi
         working-directory: ./connectors/${{ env.dir }}
-      # - name: Run Poetry Tests
-      #   run: poetry run pytest --html=report-unit-test.html unit_tests 
-      #   working-directory: ./connectors/${{ env.dir }}
-      # - name: Upload Test Result
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: report-unit-test.html
-      #     path: ./connectors/${{ env.dir }}
