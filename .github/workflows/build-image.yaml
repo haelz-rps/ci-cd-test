@@ -23,7 +23,7 @@ jobs:
       - name: Get list of changed files
         id: changes
         run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
+          git diff ./connectors/ --name-only ${{ github.event.before }} ${{ github.sha }} > changed_files.txt
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo "dir=$dir" >> "$GITHUB_ENV"
 

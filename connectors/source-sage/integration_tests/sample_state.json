@@ -1,5 +1,8 @@
 {
-  "todo-stream-name": {
-    "todo-field-name": "value"
+  "VENDOR": {
+    "WHENMODIFIED": "01/01/2021 00:00:00"
+  },
+  "DEPARTMENTGROUP": {
+    "WHENMODIFIED": "05/22/2019"
   }
 }

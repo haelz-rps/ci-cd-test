@@ -17,6 +17,7 @@ packages = [ { include = "source_sage" }, {include = "main.py" } ]
 [tool.poetry.dependencies]
 python = "^3.9,<3.12"
 airbyte-cdk = "^0"
+xmltodict = "^0.14.2"
 
 [tool.poetry.scripts]
 source-sage = "source_sage.run:run"
@@ -24,6 +25,10 @@ source-sage = "source_sage.run:run"
 [tool.poetry.group.dev.dependencies]
 requests-mock = "*"
 pytest-mock = "*"
-pytest = "*"
 pytest-html = "*"
+pytest = "*"
 
+[tool.pytest.ini_options]
+markers = [
+    "integration: mark a test as an integration test."
+]

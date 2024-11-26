@@ -1,5 +1,13 @@
-{
-  "todo-stream-name": {
-    "todo-field-name": "todo-abnormal-value"
+[
+  {
+    "type": "STREAM",
+    "stream": {
+      "stream_state": {
+        "WHENMODIFIED": "2023-01-01T00:00:00"
+      },
+      "stream_descriptor": {
+        "name": "BANKACCOUNT"
+      }
+    }
   }
-}
+]

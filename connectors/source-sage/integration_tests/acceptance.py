@@ -10,7 +10,7 @@ pytest_plugins = ("connector_acceptance_test.plugin",)
 
 @pytest.fixture(scope="session", autouse=True)
 def connector_setup():
-    """This fixture is a placeholder for external resources that acceptance test might require."""
-    # TODO: setup test dependencies if needed. otherwise remove the TODO comments
+    """Fixture for setting up external resources required by acceptance tests."""
+    # Placeholder for any setup actions required before running tests
     yield
-    # TODO: clean up test dependencies
+    # Placeholder for any teardown actions after tests

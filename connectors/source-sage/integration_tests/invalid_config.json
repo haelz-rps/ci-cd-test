@@ -1,3 +1,7 @@
 {
-  "todo-wrong-field": "this should be an incomplete config file, used in standard tests"
+  "sender_id": "",
+  "sender_password": "incorrect_password",
+  "user_id": "fake_user",
+  "user_password": "incorrect_password",
+  "company_id": "fake_company"
 }

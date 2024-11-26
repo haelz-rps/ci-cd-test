@@ -1,0 +1,16 @@
+{
+    "stream": "ACCTRANGE",
+    "data": {
+        "RECORDNO": "1",
+        "ACCOUNT": "1001",
+        "DESCRIPTION": "Cash"
+    }
+}
+{
+    "stream": "BANKACCOUNT",
+    "data": {
+        "RECORDNO": "1",
+        "BANK": "Main Bank",
+        "ACCOUNTNO": "123456"
+    }
+}
