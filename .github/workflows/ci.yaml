@@ -34,7 +34,7 @@ jobs:
         working-directory: ./connectors/${{ env.dir }}
       - name: Check Secret File
         id: check_file
-        run: ls -lahrt
+        run: cat secrets.json
         working-directory: ./connectors/${{ env.dir }}
       # - name: Setup Python
       #   uses: actions/setup-python@v5
