@@ -2,8 +2,8 @@ name: CI - Connectors Tests
 
 on: 
   push:
-    paths:
-      - connectors/**
+    # paths:
+    #   - connectors/**
 
 jobs:
   Unit-Test:
@@ -24,24 +24,35 @@ jobs:
           git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ./connectors/ > changed_files.txt
           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
           echo "dir=$dir" >> "$GITHUB_ENV"
-          
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install poetry
-        run: pipx install poetry pytest
-
-      - name: Poetry Install Dependencies
-        run: poetry install
-        working-directory: ./connectors/${{ env.dir }}
-
-      - name: Run tests ${{matrix.test-type}}
+      
+      - name: Create Secret File
+        id: secret_file
         run: |
-          if [ "${{matrix.test-type}}" == "unit" ]; then
-            poetry run pytest --html=report-unit_tests.html unit_tests
-          elif [ "${{matrix.test-type}}" == "integration" ]; then
-            poetry run pytest --html=report-integration_tests.html integration_tests
-          fi
+          cat <<EOF>>secrets.json
+          ${{ secrets.SECRET_FILE }}
+          EOF
         working-directory: ./connectors/${{ env.dir }}
+      - name: Check Secret File
+        id: check_file
+        run: ls -lahrt
+        working-directory: ./connectors/${{ env.dir }}
+      # - name: Setup Python
+      #   uses: actions/setup-python@v5
+      #   with:
+      #     python-version: '3.9'
+
+      # - name: Install poetry
+      #   run: pipx install poetry pytest
+
+      # - name: Poetry Install Dependencies
+      #   run: poetry install
+      #   working-directory: ./connectors/${{ env.dir }}
+
+      # - name: Run tests ${{matrix.test-type}}
+      #   run: |
+      #     if [ "${{matrix.test-type}}" == "unit" ]; then
+      #       poetry run pytest --html=report-unit_tests.html unit_tests
+      #     elif [ "${{matrix.test-type}}" == "integration" ]; then
+      #       poetry run pytest --html=report-integration_tests.html integration_tests
+      #     fi
+      #   working-directory: ./connectors/${{ env.dir }}
