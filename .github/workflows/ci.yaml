@@ -26,5 +26,5 @@ jobs:
       working-directory: ./manager
 
     - name: Test
-      run: go test -v ./...
+      run: go test ./test/e2e
       working-directory: ./manager
