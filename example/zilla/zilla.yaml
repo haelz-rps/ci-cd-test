@@ -1,0 +1,92 @@
+name: example
+bindings:
+  north_tcp_server:
+    type: tcp
+    kind: server
+    options:
+      host: 0.0.0.0
+      port:
+        - 7114
+    routes:
+      - when:
+          - port: 7114
+        exit: north_http_server
+    telemetry:
+      metrics:
+        - stream.*
+  north_http_server:
+    type: http
+    kind: server
+    routes:
+      - when:
+          - headers:
+              :scheme: http
+        exit: north_http_kafka_mapping
+    telemetry:
+      metrics:
+        - stream.*
+  north_http_kafka_mapping:
+    type: http-kafka
+    kind: proxy
+    routes:
+      - when:
+          - method: GET
+            path: /feeds
+        exit: north_kafka_cache_client
+        with:
+          capability: produce
+          topic: api-requests
+          reply-to: api-responses
+          overrides:
+            function: list-feeds
+    telemetry:
+      metrics:
+        - stream.*
+  north_kafka_cache_client:
+    type: kafka
+    kind: cache_client
+    exit: south_kafka_cache_server
+    telemetry:
+      metrics:
+        - stream.*
+  south_kafka_cache_server:
+    type: kafka
+    kind: cache_server
+    options:
+      bootstrap:
+        - items-responses
+    exit: south_kafka_client
+    telemetry:
+      metrics:
+        - stream.*
+  south_kafka_client:
+    type: kafka
+    kind: client
+    options:
+      servers:
+        - kafka:9092
+    exit: south_tcp_client
+    telemetry:
+      metrics:
+        - stream.*
+  south_tcp_client:
+    type: tcp
+    kind: client
+    telemetry:
+      metrics:
+        - stream.*
+telemetry:
+  metrics:
+    - stream.active.received
+    - stream.active.sent
+    - stream.opens.received
+    - stream.opens.sent
+    - stream.data.received
+    - stream.data.sent
+    - stream.errors.received
+    - stream.errors.sent
+    - stream.closes.received
+    - stream.closes.sent
+  exporters:
+    stdout_logs_exporter:
+      type: stdout

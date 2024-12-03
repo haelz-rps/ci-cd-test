@@ -1,0 +1,51 @@
+syntax = "proto3";
+package feed;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/Schub-cloud/security-bulletins/api/feed/feed";
+
+service FeedService {
+  rpc CreateFeed (CreateFeedRequest) returns (CreateFeedResponse) {}
+  rpc ListFeeds (ListFeedsRequest) returns (ListFeedsResponse) {}
+}
+
+message Post {
+  uint64 id = 1;
+  uint64 feedID = 2;
+  string title = 3;
+  string link = 4;
+  google.protobuf.Timestamp pubDate = 5;
+  google.protobuf.Timestamp createdAt = 6;
+  google.protobuf.Timestamp updatedAt = 7;
+  google.protobuf.Timestamp deletedAt = 8;
+}
+
+message Feed {
+  uint64 id = 1;
+  string name = 2;
+  repeated Post posts = 3;
+  string link = 4;
+  google.protobuf.Timestamp createdAt = 5;
+  google.protobuf.Timestamp updatedAt = 6;
+  google.protobuf.Timestamp deletedAt = 7;
+}
+
+// Create Feed Request
+message CreateFeedRequest {
+  string name = 1;
+  string link = 2;
+}
+
+message CreateFeedResponse {
+  Feed feed = 1;
+  string err = 2;
+}
+
+// List Feed Request
+message ListFeedsRequest {}
+
+message ListFeedsResponse {
+  repeated Feed feeds = 1;
+  string err = 2;
+}

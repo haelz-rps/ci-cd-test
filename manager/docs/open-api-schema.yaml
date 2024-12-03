@@ -1,0 +1,1454 @@
+openapi: 3.0.3
+info:
+  title: Dripper Manager API
+  version: 0.1.0
+  description: |
+    This API is made to interact with our Dripper platform which 
+    is responsible for the following
+    - Ingestions
+    - Queries \[WIP\]
+
+    # Ingestions API
+
+    Airbyte, Kafka and Spark to ingest data from many sources into S3
+    using an event driven architecture
+
+    Workspaces is entity we have to represent the the working space for each client
+
+    SourcesDefinitions are the available sources list we are able to use
+    to ingest data
+
+    Sources are the sources created and configured with user credentials
+
+    Connectors are the sources that are already connected to the S3
+
+    The connector creation flow is
+    1. Create a workspace for each new user
+    2. Choose a source from the sources definitions and create one
+    3. Get the source available tables and use it to create the connector
+    4. Use the connector endpoints to handle its jobs
+
+    # Queries API
+
+    \[WIP\]
+servers:
+  - url: http://localhost:8080
+  - url: https://dripper-manager-api.dripper-dev.ubix.io
+paths:
+  /ingestions/workspaces:
+    get:
+      summary: List available workspaces
+      operationId: listWorkspaces
+      parameters:
+        - in: query
+          name: limit
+          description: Number of items to list
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          description: The number of items to skip before listing the results
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+        - in: query
+          name: nameContains
+          description: Some substring of the workspace name to search for
+          schema:
+            type: string
+            default: ""
+      responses:
+        '200':
+          description: Returns a list of workspaces
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkspaceList'
+      tags:
+        - Ingestions API
+        - Workspace
+    post:
+      summary: Creates and setup a new workspace and its equivalent destination
+      operationId: createWorkspace
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequestBody'
+      responses:
+        '201':
+          description: Returns the created workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+      tags:
+        - Ingestions API
+        - Workspace
+  /ingestions/workspaces/{workspaceId}:
+    get:
+      summary: Get workspace details
+      operationId: getWorkspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns a workspace
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+      tags:
+        - Ingestions API
+        - Workspace
+    delete:
+      summary: Deletes a workspace and remove all of its references on the metastore
+      operationId: deleteWorkspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns an ok if the delete was ok
+      tags:
+        - Ingestions API
+        - Workspace
+  /ingestions/workspaces/{workspaceId}/sources_definitions:
+    get:
+      summary: List available sources to use
+      operationId: listSourcesDefinitions
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns a list of sources
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceDefinitionList'
+      tags:
+        - Ingestions API
+        - SourceDefinition
+  /ingestions/workspaces/{workspaceId}/sources_definitions/{sourceDefinitionId}/configuration:
+    get:
+      summary: Get source with configuration schema details
+      operationId: getSourceDefinitionConfiguration
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceDefinitionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns a source definition configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceDefinitionConfiguration'
+      tags:
+        - Ingestions API
+        - SourceDefinition
+  /ingestions/workspaces/{workspaceId}/sources_definitions/{sourceDefinitionId}/sources:
+    post:
+      summary: Create Source based on Source Definition
+      operationId: createSourceFromDefinition
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceDefinitionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequestBody'
+      responses:
+        '202':
+          description: >-
+            Returns the ticketId to track the async creation of the source.
+            Use the ticket id at /workspaces/{workspaceId}/sources_definitions/{sourceDefinitionID}/status/{ticketId} endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncOperationResponse'
+      tags:
+        - Ingestions API
+        - SourceDefinition
+  /ingestions/workspaces/{workspaceId}/sources_definitions/{sourceDefinitionID}/sources/{ticketId}/status:
+    get:
+      summary: Get Source creation status
+      operationId: getCreateSourceFromDefinitionStatus
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceDefinitionID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: >-
+            Returns whether the creation of the given ticketId is either pending
+            or succeded. In case of \"pending\" or \"failed\" status, the
+            sourceId will be null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSourceStatus'
+      tags:
+        - Ingestions API
+        - SourceDefinition
+  /ingestions/workspaces/{workspaceId}/sources:
+    get:
+      summary: List Sources
+      operationId: listSources
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: >-
+            Returns a list of sources.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SourceList'
+      tags:
+        - Ingestions API
+        - Source
+  /ingestions/workspaces/{workspaceId}/sources/{sourceId}:
+    get:
+      summary: Get source
+      operationId: getSource
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns the requested source.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Source'
+      tags:
+        - Ingestions API
+        - Source
+    put:
+      summary: Updates source
+      operationId: updateSource
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSourceRequestBody'
+      responses:
+        '202':
+          description: >-
+            Returns the ticket_id to track the async update of the source.
+            Use the ticket id at /sources/{sourceId}/status/{ticketId} endpoint.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncOperationResponse'
+      tags:
+        - Ingestions API
+        - Source
+    delete:
+      summary: Deletes source
+      operationId: deleteSource
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns an ok if the delete was ok
+      tags:
+        - Ingestions API
+        - Source
+  /ingestions/workspaces/{workspaceId}/sources/{sourceId}/status/{ticketId}:
+    get:
+      summary: Get updated source
+      operationId: getUpdateSourceStatus
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns a updated source
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateSourceStatus'
+      tags:
+        - Source
+  /ingestions/workspaces/{workspaceId}/sources/{sourceId}/tables:
+    get:
+      summary: Get source tables
+      operationId: getSourceTables
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: >-
+            Returns whether the creation of  ticketId is either pending
+            or succeded. In case of \"pending\" or \"failed\" status, the
+            tables will be null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncOperationResponse'
+      tags:
+        - Ingestions API
+        - Source
+  /ingestions/workspaces/{workspaceId}/sources/{sourceId}/tables/{ticketId}/status:
+    get:
+      summary: Get source tables listing status
+      operationId: getGetSourceTablesStatus
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: ticketId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: >-
+            Returns whether the creation of the given ticketId is either pending
+            or succeded. In case of \"pending\" or \"failed\" status, the
+            tables will be null.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSourceTablesStatus'
+      tags:
+        - Ingestions API
+        - Source
+  /ingestions/workspaces/{workspaceId}/sources/{sourceId}/connectors:
+    post:
+      summary: Create Connector from source
+      description: To schedule using the "cron" option, use [Quartz syntax](https://www.quartz-scheduler.org/documentation/quartz-2.3.0/tutorials/crontrigger.html) for the cron expression.
+      operationId: createConnectorFromSource
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: sourceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConnectorRequestBody'
+      responses:
+        '201':
+          description: Returns the created connector
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+      tags:
+        - Ingestions API
+        - Source
+  /ingestions/workspaces/{workspaceId}/connectors:
+    get:
+      summary: List all created connectors
+      operationId: listConnectors
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: limit
+          description: Number of items to list
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          description: The number of items to skip before listing the results
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: A list of connectors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConnectorsPaginated'
+      tags:
+        - Ingestions API
+        - Connector
+  /ingestions/workspaces/{workspaceId}/connectors/{connectorId}:
+    get:
+      summary: Get connector details
+      operationId: getConnector
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          description: The connector ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: A Connector
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+      tags:
+        - Ingestions API
+        - Connector
+    put:
+      summary: Update a connector
+      operationId: updateConnector
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          description: The connector ID
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateConnectorRequestBody'
+      responses:
+        '200':
+          description: A Connector
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Connector'
+      tags:
+        - Connector
+    delete:
+      summary: Delete connector
+      operationId: deleteConnector
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: connectorId
+          required: true
+          description: The connector ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Returns 200 if the connector was deleted
+      tags:
+        - Ingestions API
+        - Connector
+  /ingestions/workspaces/{workspaceId}/connectors/{connectorId}/jobs:
+    get:
+      summary: Get connector job runs list
+      operationId: listJobs
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          description: Number of items to list
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - name: offset
+          in: query
+          description: The number of items to skip before listing the results
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Returns a list of the connector jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobList'
+      tags:
+        - Ingestions API
+        - Job
+    post:
+      summary: Create a job for the given connector
+      operationId: triggerJobRun
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '201':
+          description: Returns the job just created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+      tags:
+        - Ingestions API
+        - Job
+  /ingestions/workspaces/{workspaceId}/connectors/{connectorId}/jobs/{jobId}:
+    get:
+      summary: Get the job entity to monitor its status
+      operationId: getJob
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Returns the job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Job'
+      tags:
+        - Ingestions API
+        - Job
+  /ingestions/workspaces/{workspaceId}/connectors/{connectorId}/jobs/{jobId}/logs:
+    get:
+      summary: Get connector job runs list
+      operationId: getJobLogs
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: connectorId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: limit
+          description: Number of items to list
+          schema:
+            type: integer
+            default: 20
+            minimum: 1
+            maximum: 100
+        - in: query
+          name: offset
+          description: The number of items to skip before listing the results
+          schema:
+            type: integer
+            default: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Returns the job logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobLog'
+      tags:
+        - Ingestions API
+        - Job
+  /ingestions/airbyte_internal/sync_webhook:
+    post:
+      summary: Produces a Kafka Message to notify that an Airbyte Sync job is done
+      operationId: postSuccesfullJob
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SuccessfulJobWebhookPayload'
+      responses:
+        '200':
+          description: Kafka Message Produced
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "Kafka Message Produced"
+      tags:
+        - Ingestions API
+        - Internal
+components:
+  schemas:
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: "creator-id"
+      required:
+        - id
+        - name
+    WorkspaceList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Workspace'
+    CreateWorkspaceRequestBody:
+      type: object
+      properties:
+        tenant:
+          type: string
+          example: "creator-id"
+        bucket:
+          type: string
+          example: "warehouse-12345678"
+      required:
+        - tenant
+        - bucket
+    SourceDefinition:
+      type: object
+      properties:
+        sourceDefinitionId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        documentationUrl:
+          type: string
+        icon:
+          type: string
+      required:
+        - sourceDefinitionId
+        - name
+        - icon
+    SourceDefinitionList:
+      type: array
+      items:
+        $ref: '#/components/schemas/SourceDefinition'
+    Source:
+      type: object
+      properties:
+        sourceDefinitionId:
+          type: string
+          format: uuid
+        sourceId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        documentationUrl:
+          type: string
+        icon:
+          type: string
+        configuration:
+          $ref: '#/components/schemas/Json'
+      required:
+        - sourceId
+    SourceList:
+      type: array
+      items:
+        $ref: '#/components/schemas/Source'
+    AsyncOperationResponse:
+      type: object
+      properties:
+        ticketId:
+          type: string
+          format: uuid
+      required:
+        - ticketId
+    ConnectionSpecificationProperty:
+      type: object
+      properties:
+        airbyte_secret:
+          type: boolean
+          description: If this value is a secret or not
+          example: false
+        const:
+          type: string
+          description: Constant value to use if this value is a constant
+        order:
+          type: integer
+          description: Order to show this property when rendering the configuration screen
+          example: 0
+        title:
+          type: string
+          description: Property name
+          example: client_id
+        type:
+          type: string
+          description: >-
+            Data type of the property, allowed values are string, integer,
+            boolean and array
+          example: string
+        examples:
+          type: array
+          items:
+            type: string
+          description: >-
+            List of example values to use, the type will be the same as the
+            property type
+          example:
+            - '1'
+            - '2'
+        default:
+          type: integer
+          description: Default value to show already filled
+          example: some_client_id
+        description:
+          type: string
+          description: Property description
+          example: This property does this and that
+        format:
+          type: string
+          description: Data format to use, normally appears only for date types
+          example: date
+        pattern:
+          type: string
+          description: Regex to apply to show the date when using format 'date'
+          example: ^[0-9]{4}-[0-9]{2}-[0-9]{2}$
+        uniqueItems:
+          type: boolean
+          description: >-
+            Flag to describe if we should allow repeated items when dealing with
+            array properties
+          example: false
+        enum:
+          type: array
+          items:
+            type: string
+          description: >-
+            List of allowed values to use, the type will be the same as the
+            property type
+          example:
+            - '1'
+            - '2'
+        items:
+          type: object
+          description: >-
+            List of values to add, this type will only be used if the type of
+            the property is array
+          properties:
+            type:
+              type: string
+              description: Data type of the property
+            enum:
+              type: array
+              items:
+                type: string
+              description: >-
+                List of allowed values to use, the type will be the same as the
+                property type
+    SingleConnectionSpecification:
+      type: object
+      additionalProperties: true
+      properties:
+        title:
+          type: string
+        type:
+          type: string
+          example: object
+        properties:
+          type: object
+          additionalProperties: true
+          properties:
+            sample_property:
+              $ref: '#/components/schemas/ConnectionSpecificationProperty'
+        required:
+          type: array
+          description: List of fields required
+          items:
+            type: string
+    SourceDefinitionConfiguration:
+      type: object
+      properties:
+        sourceDefinitionId:
+          type: string
+          format: uuid
+        documentationUrl:
+          type: string
+        sourceConfiguration:
+          type: object
+          additionalProperties: true
+          properties:
+            title:
+              type: string
+            type:
+              type: string
+            properties:
+              type: object
+              additionalProperties: true
+              properties:
+                sample_property_with_all_fields:
+                  $ref: '#/components/schemas/ConnectionSpecificationProperty'
+                sample_string:
+                  type: object
+                  example:
+                    type: string
+                    order: 1
+                    title: ClientID
+                    description: Client Id to use
+                sample_integer:
+                  type: object
+                  example:
+                    type: integer
+                    order: 1
+                    title: Some Integer
+                    description: Some description
+                    default: 1
+                sample_enum:
+                  type: object
+                  example:
+                    enum:
+                      - NA
+                      - EU
+                      - FE
+                    type: string
+                    order: 1
+                    title: Region
+                    default: NA
+                    description: Some description
+                sample_array:
+                  type: object
+                  example:
+                    type: array
+                    items:
+                      type: string
+                    order: 1
+                    title: Array
+                    description: Some description
+                sample_array_enum:
+                  type: object
+                  example:
+                    type: array
+                    items:
+                      enum:
+                        - enabled
+                        - paused
+                        - archived
+                      type: string
+                    order: 1
+                    title: Enum Array
+                    description: Some description
+                    uniqueItems: true
+            required:
+              type: array
+              description: List of fields required
+              items:
+                type: string
+            oneOf:
+              type: array
+              items:
+                $ref: '#/components/schemas/SingleConnectionSpecification'
+      required:
+        - sourceDefinitionId
+        - sourceConfiguration
+    CreateSourceRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Connector name
+        configuration:
+          type: object
+          description: >-
+            Property object to be generated on the client based on the source
+            schema
+          example:
+            sample_string: ClientID
+            sample_integer: 10
+    CreateConnectorRequestBody:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Connector name
+        scheduleType:
+          $ref: '#/components/schemas/ScheduleType'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+      required:
+        - name
+        - scheduleType
+        - tables
+    ResourceRequirements:
+      type: object
+      properties:
+        cpuLimit:
+          type: string
+        cpuRequest:
+          type: string
+        memoryLimit:
+          type: string
+        memoryRequest:
+          type: string
+    ScheduleType:
+      description: determine how the schedule data should be interpreted
+      type: string
+      enum:
+        - manual
+        - basic
+        - cron
+    BasicSchedule:
+      type: object
+      properties:
+        timeUnit:
+          type: string
+        units:
+          type: integer
+    CronSchedule:
+      type: object
+      properties:
+        timeZone:
+          type: string
+          example: "UTC"
+        expression:
+          type: string
+    Schedule:
+      type: object
+      properties:
+        basicSchedule:
+          $ref: '#/components/schemas/BasicSchedule'
+          nullable: true
+        cronSchedule:
+          $ref: '#/components/schemas/CronSchedule'
+          nullable: true
+    TableConfiguration:
+      type: object
+      properties:
+        aliasName:
+          type: string
+        cursorField:
+          type: array
+          items:
+            type: string
+        destinationSyncMode:
+          type: string
+        primaryKey:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+        selected:
+          type: boolean
+        syncMode:
+          type: string
+    Json:
+      type: object
+      nullable: true
+      additionalProperties: true
+    Table:
+      type: object
+      properties:
+        name:
+          type: string
+        jsonSchema:
+          $ref: '#/components/schemas/Json'
+        supportedSyncModes:
+          type: array
+          items:
+            type: string
+        sourceDefinedCursor:
+          type: boolean
+        defaultCursorField:
+          type: array
+          items:
+            type: string
+        sourceDefinedPrimaryKey:
+          type: array
+          items:
+            type: string
+        syncEnabled:
+          type: boolean
+        namespace:
+          type: string
+          example: "dbo"
+        selectedCursorField:
+          type: array
+          items:
+            type: string
+            example: "updated_at"
+      required:
+        - name
+        - jsonSchema
+        - supportedSyncModes
+        - sourceDefinedCursor
+        - defaultCursorField
+        - sourceDefinedPrimaryKey
+        - syncEnabled
+    TableList:
+      nullable: true
+      type: array
+      items:
+          $ref: '#/components/schemas/Table'
+    GetSourceTablesStatus:
+      type: object
+      properties:
+        tables:
+            $ref: '#/components/schemas/TableList'
+        status:
+          type: string
+          enum:
+            - finished
+            - pending
+            - failed
+        error:
+          type: string
+          nullable: true
+      required: 
+        - status
+    Connector:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        warehouseDatabase:
+          type: string
+        resourceRequirements:
+          $ref: '#/components/schemas/ResourceRequirements'
+        scheduleType:
+          $ref: '#/components/schemas/ScheduleType'
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        sourceId:
+          type: string
+          format: uuid
+        tables:
+          type: array
+          items:
+            $ref: '#/components/schemas/Table'
+        sourceConfiguration:
+          $ref: '#/components/schemas/Json'
+        destinationConfiguration:
+          $ref: '#/components/schemas/Json'
+      required:
+        - id
+        - name
+        - warehouseDatabase
+        - sourceId
+        - tables
+        - sourceConfiguration
+        - destinationConfiguration
+        - scheduleType
+    ConnectorsPaginated:
+      type: array
+      items:
+        $ref: '#/components/schemas/Connector'
+    JobId:
+      format: int64
+      type: integer
+    JobStatus:
+      enum:
+        - pending
+        - running
+        - incomplete
+        - failed
+        - succeeded
+        - cancelled
+      type: string
+    Job:
+      type: object
+      properties:
+        id:
+          $ref: "#/components/schemas/JobId"
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        createdAt:
+          format: int64
+          type: integer
+        updatedAt:
+          format: int64
+          type: integer
+        rowsSynced:
+          format: int64
+          type: integer
+        bytesSynced:
+          format: int64
+          type: integer
+
+    JobList:
+      type: array
+      items: 
+        $ref: "#/components/schemas/Job"
+
+    JobTypeEnum:
+      description: Enum that describes the different types of jobs that the platform runs.
+      enum:
+        - sync
+        - reset
+        - refresh
+        - clear
+      type: string
+    JobCreateRequest:
+      title: Root Type for JobCreate
+      description: Creates a new Job from the configuration provided in the request body.
+      required:
+        - jobType
+      type: object
+      properties:
+        jobType:
+          $ref: "#/components/schemas/JobTypeEnum"
+      example:
+        jobType: sync
+
+    JobLog:
+      type: array
+      items:
+        type: string
+    AsyncRequestStatusEnum:
+      description: Enum that describes the status of an async request.
+      enum:
+        - finished
+        - pending
+        - failed
+      type: string
+    CreateConnectorStatus:
+      type: object
+      properties:
+        connectorId:
+          type: string
+          format: uuid
+        status:
+          $ref: "#/components/schemas/AsyncRequestStatusEnum"
+      required:
+        - status
+    CreateSourceStatus:
+      type: object
+      properties:
+        sourceId:
+          type: string
+          format: uuid
+          nullable: true
+        status:
+          $ref: "#/components/schemas/AsyncRequestStatusEnum"
+        error:
+          type: string
+          nullable: true
+      required: 
+        - status
+    UpdateSourceStatus:
+      type: object
+      properties:
+        source:
+          $ref: '#/components/schemas/Source'
+          nullable: true
+        status:
+          $ref: "#/components/schemas/AsyncRequestStatusEnum"
+        error:
+          type: string
+          nullable: true
+      required: 
+        - status
+    SuccessfulJobWebhookPayload:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            workspace:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "b510e39b-e9e2-4833-9a3a-963e51d35fb4"
+                name:
+                  type: string
+                  example: "Workspace1"
+                url:
+                  type: string
+                  format: uri
+                  example: "https://link/to/ws"
+            connection:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "64d901a1-2520-4d91-93c8-9df438668ff0"
+                name:
+                  type: string
+                  example: "Connection"
+                url:
+                  type: string
+                  format: uri
+                  example: "https://link/to/connection"
+            source:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "c0655b08-1511-4e72-b7da-24c5d54de532"
+                name:
+                  type: string
+                  example: "Source"
+                url:
+                  type: string
+                  format: uri
+                  example: "https://link/to/source"
+            destination:
+              type: object
+              properties:
+                id:
+                  type: string
+                  format: uuid
+                  example: "5621c38f-8048-4abb-85ca-b34ff8d9a298"
+                name:
+                  type: string
+                  example: "Destination"
+                url:
+                  type: string
+                  format: uri
+                  example: "https://link/to/destination"
+            jobId:
+              type: integer
+              example: 9988
+            startedAt:
+              type: string
+              format: date-time
+              example: "2024-01-01T00:00:00Z"
+            finishedAt:
+              type: string
+              format: date-time
+              example: "2024-01-01T01:00:00Z"
+            bytesEmitted:
+              type: integer
+              example: 1000
+            bytesCommitted:
+              type: integer
+              example: 1000
+            recordsEmitted:
+              type: integer
+              example: 89
+            recordsCommitted:
+              type: integer
+              example: 89
+            bytesEmittedFormatted:
+              type: string
+              example: "1000 B"
+            bytesCommittedFormatted:
+              type: string
+              example: "90 B"
+            success:
+              type: boolean
+              example: true
+            durationInSeconds:
+              type: integer
+              example: 3600
+            durationFormatted:
+              type: string
+              example: "1 hours 0 min"
+tags:
+  - name: Ingestions API
+  - name: Workspace
+  - name: SourceDefinition
+  - name: Source
+  - name: Connector
+  - name: Job
+  - name: Internal
+  - name: Queries API

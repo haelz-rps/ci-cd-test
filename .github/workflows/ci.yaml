@@ -1,58 +1,30 @@
-name: CI - Connectors Tests
+# This workflow will build a golang project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
 
-on: 
+name: Go
+
+on:
   push:
-    # paths:
-    #   - connectors/**
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
-  Unit-Test:
+
+  build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        test-type: [unit, integration]
-    name: Connectors Tests
     steps:
-      - name: Setup Git
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
+    - uses: actions/checkout@v4
 
-      - name: Get list of changed files
-        id: changes
-        run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ./connectors/ > changed_files.txt
-          dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-          echo "dir=$dir" >> "$GITHUB_ENV"
-      
-      - name: Create Secret File
-        id: secret_file
-        run: |
-          cat <<EOF>>secrets.json
-          ${{ secrets.SECRET_FILE }}
-          EOF
-        working-directory: ./connectors/${{ env.dir }}
-      - name: Check Secret File
-        id: check_file
-        run: cat secrets.json
-        working-directory: ./connectors/${{ env.dir }}
-      # - name: Setup Python
-      #   uses: actions/setup-python@v5
-      #   with:
-      #     python-version: '3.9'
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.23'
 
-      # - name: Install poetry
-      #   run: pipx install poetry pytest
+    - name: Build
+      run: go build -v ./...
+      working-directory: ./manager
 
-      # - name: Poetry Install Dependencies
-      #   run: poetry install
-      #   working-directory: ./connectors/${{ env.dir }}
-
-      # - name: Run tests ${{matrix.test-type}}
-      #   run: |
-      #     if [ "${{matrix.test-type}}" == "unit" ]; then
-      #       poetry run pytest --html=report-unit_tests.html unit_tests
-      #     elif [ "${{matrix.test-type}}" == "integration" ]; then
-      #       poetry run pytest --html=report-integration_tests.html integration_tests
-      #     fi
-      #   working-directory: ./connectors/${{ env.dir }}
+    - name: Test
+      run: go test -v ./...
+      working-directory: ./manager
