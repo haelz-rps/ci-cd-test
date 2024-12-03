@@ -1,7 +1,10 @@
 name: CI - Connectors Tests
 
 on: 
-
+  push:
+  pull_request:
+    paths:
+      - connectors/**
 
 jobs:
   Unit-Test:
