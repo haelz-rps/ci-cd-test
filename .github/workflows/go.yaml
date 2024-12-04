@@ -5,8 +5,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-
-  build:
+  Unit_Test:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -21,9 +20,44 @@ jobs:
       working-directory: ./manager
 
     - name: Unit Test
-      run: go test -v ./...
+      run: go test ./...
       working-directory: ./manager
-    
-    - name: End to End Test
-      run: go test ./test/e2e/
-      working-directory: ./manager
+
+  E2E_Tests:
+    runs-on: ubuntu-latest
+    name: End to End Teste
+    needs: ["Unit_Test"]
+    permissions:
+        id-token: write
+        contents: read
+    steps:
+      - name: Git Clone
+        uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.23'
+  
+      - name: Build
+        run: go build -v ./...
+        working-directory: ./manager
+      
+      - name: Turn-on Environment
+        id: turn_on
+        run: docker-compose up -d
+        working-directory: ./manager
+      
+      - name: Check Containers
+        id: check
+        run: docker ps
+        
+      - name: End to End Test
+        run: go test ./test/e2e/
+        working-directory: ./manager
+
+      - name: Shutdown Containers
+        id: shutdown  
+        run: docker-compose down
+        working-directory: ./manager
+        

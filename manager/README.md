@@ -10,9 +10,10 @@ docker-compose -f docker-compose.yaml -f docker-compose.airbyte.yaml up
 ```bash
 go run ./cmd/rest-api
 ```
-3. Run the end to end tests
+3. Run the test
 ```bash
-go test ./test/e2e
+go test ./...
+go test ./... -tags e2e
 ```
 ## Contribution Guidelines
 

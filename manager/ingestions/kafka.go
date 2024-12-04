@@ -18,14 +18,14 @@ func NewKafkaWorkerHandler(EndpointSet *EndpointSet, subscriber message.Subscrib
 
 	router.AddPlugin(plugin.SignalsHandler)
 
-	deadLetterMiddleware, _ := middleware.PoisonQueue(publisher, constants.BrokerTopics.DeadLetter)
+	// deadLetterMiddleware, _ := middleware.PoisonQueue(publisher, constants.BrokerTopics.DeadLetter)
 
 	router.AddMiddleware(
 		middleware.Retry{
 			MaxRetries:      5,
 			InitialInterval: time.Minute * 1,
 		}.Middleware,
-		deadLetterMiddleware,
+		// deadLetterMiddleware,
 	)
 
 	router.AddHandler(

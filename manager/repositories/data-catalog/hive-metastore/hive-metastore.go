@@ -280,7 +280,7 @@ func (m *hivemetastore) createDatasets(ctx context.Context, connector *dataextra
 		}
 		fmt.Println(parsedResponse)
 
-		if parsedResponse.Data != nil {
+		if _, ok := parsedResponse.Data.(map[string]interface{}); ok {
 			continue
 		}
 		// if there is no dataset then create
