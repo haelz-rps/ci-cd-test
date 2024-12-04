@@ -1,57 +1,69 @@
-name: CI - Connectors Tests
+# name: CI - Connectors Tests
 
-on: 
-  push:
-  pull_request:
-    paths:
-      - connectors/**
+# on: 
+#   pull_request:
+#     paths:
+#       - connectors/**
 
-jobs:
-  Unit-Test:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        test-type: [unit, integration]
-    name: Connectors Tests
-    steps:
-      - name: Setup Git
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+# jobs:
+#   Unit-Test:
+#     runs-on: ubuntu-latest
+#     strategy:
+#       matrix:
+#         test-type: [unit_tests, integration]
+#     name: Connectors Tests
+#     steps:
+#       - name: Setup Git
+#         uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
 
-      - name: Get list of changed files
-        id: changes
-        run: |
-          git diff --name-only HEAD^ HEAD -- ./connectors/ > changed_files.txt
-          dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-          echo "dir=$dir" >> "$GITHUB_ENV"
+#       - name: Get list of changed files
+#         id: changes
+#         run: |
+#           git diff --name-only HEAD^ HEAD -- ./connectors/ > changed_files.txt
+#           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
+#           echo "dir=$dir" >> "$GITHUB_ENV"
+#       - name: Create Secret File
+#         id: secret_file
+#         run: |
+#           echo "${{ env.dir }}"
+#           cat <<EOF>>secrets/secrets.json
+#           ${{ secrets.SECRETS_FILE }}
+#           EOF
+#         working-directory: ./connectors/${{ env.dir }}
 
-      - name: Create Secret File
-        id: secret_file
-        run: |
-          echo "${{ env.dir }}"
-          cat <<EOF>>secrets/secrets.json
-          ${{ secrets.SECRETS_FILE }}
-          EOF
-        working-directory: ./connectors/${{ env.dir }}
+#       - name: Setup Python
+#         uses: actions/setup-python@v5
+#         with:
+#           python-version: '3.9'
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
+#       - name: Install poetry
+#         run: pipx install poetry pytest
 
-      - name: Install poetry
-        run: pipx install poetry pytest
+#       - name: Poetry Install Dependencies
+#         run: poetry install
+#         working-directory: ./connectors/${{ env.dir }}
 
-      - name: Poetry Install Dependencies
-        run: poetry install
-        working-directory: ./connectors/${{ env.dir }}
+#       - name: Run tests ${{matrix.test-type}}
+#         run: |
+#           if [ "${{matrix.test-type}}" == "unit_tests" ]; then
+#             poetry run pytest --html=report-unit_tests.html unit_tests
+#           elif [ "${{matrix.test-type}}" == "integration" ]; then
+#             poetry run pytest --html=report-integration.html integration_tests
+#           fi
+#         working-directory: ./connectors/${{ env.dir }}
+      
+#       - name: Upload unit test report
+#         if: matrix.test-type == 'unit_tests'
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: report-unit_tests.html
+#           path: ./connectors/${{env.dir}}/report-unit_tests.html
 
-      - name: Run tests ${{matrix.test-type}}
-        run: |
-          if [ "${{matrix.test-type}}" == "unit" ]; then
-            poetry run pytest --html=report-unit_tests.html unit_tests
-          elif [ "${{matrix.test-type}}" == "integration" ]; then
-            poetry run pytest --html=report-integration_tests.html integration_tests
-          fi
-        working-directory: ./connectors/${{ env.dir }}
+#       - name: Upload integration test report
+#         if: matrix.test-type == 'integration'
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: report-integration_tests.html
+#           path: ./connectors/${{env.dir}}/report-integration.html

@@ -1,61 +1,61 @@
-name: Build Image
+# name: Build Image
 
-on: 
-  push:
-    paths:
-      - connectors/**
-    branches:
-      - main
+# on: 
+#   push:
+#     paths:
+#       - connectors/**
+#     branches:
+#       - main
 
-jobs:
-  build_image:
-    runs-on: ubuntu-latest
-    name: Build Image
-    permissions:
-        id-token: write
-        contents: read
-    steps:
-      - name: Setup Git
-        uses: actions/checkout@v4
-        with:
-            fetch-depth: 2
+# jobs:
+#   build_image:
+#     runs-on: ubuntu-latest
+#     name: Build Image
+#     permissions:
+#         id-token: write
+#         contents: read
+#     steps:
+#       - name: Setup Git
+#         uses: actions/checkout@v4
+#         with:
+#             fetch-depth: 2
   
-      - name: Get list of changed files
-        id: changes
-        run: |
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ./connectors/ > changed_files.txt
-          dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-          echo "dir=$dir" >> "$GITHUB_ENV"
+#       - name: Get list of changed files
+#         id: changes
+#         run: |
+#           git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ./connectors/ > changed_files.txt
+#           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
+#           echo "dir=$dir" >> "$GITHUB_ENV"
 
-      - name: Set GITHUB_RUN_NUMBER
-        id: set_github_run_number
-        run: |
-          echo GITHUB_RUN_NUMBER=$(( GITHUB_RUN_NUMBER + 279 ))>> $GITHUB_ENV
-          echo "outtag=$((GITHUB_RUN_NUMBER + 279))" >> $GITHUB_OUTPUT
+#       - name: Set GITHUB_RUN_NUMBER
+#         id: set_github_run_number
+#         run: |
+#           echo GITHUB_RUN_NUMBER=$(( GITHUB_RUN_NUMBER + 279 ))>> $GITHUB_ENV
+#           echo "outtag=$((GITHUB_RUN_NUMBER + 279))" >> $GITHUB_OUTPUT
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4.0.2
-        with:
-          aws-region: us-east-1
-          role-to-assume: arn:aws:iam::882490700787:role/connector-${{ env.dir }}-ghactionsopenid
-          role-session-name: GithubActionsSession
+#       - name: Configure AWS Credentials
+#         uses: aws-actions/configure-aws-credentials@v4.0.2
+#         with:
+#           aws-region: us-east-1
+#           role-to-assume: arn:aws:iam::882490700787:role/connector-${{ env.dir }}-ghactionsopenid
+#           role-session-name: GithubActionsSession
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1      
+#       - name: Login to Amazon ECR
+#         id: login-ecr
+#         uses: aws-actions/amazon-ecr-login@v1      
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+#       - name: Set up Docker Buildx
+#         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+#       - name: Set up QEMU
+#         uses: docker/setup-qemu-action@v3
         
-      - name: Build and push
-        uses: docker/build-push-action@v6.9.0
-        with:
-          platforms: "linux/arm64"
-          context: .
-          push: true
-          build-args: SOURCE=${{ env.dir }}
-          tags: |
-            882490700787.dkr.ecr.us-east-1.amazonaws.com/connector-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
+#       - name: Build and push
+#         uses: docker/build-push-action@v6.9.0
+#         with:
+#           platforms: "linux/arm64"
+#           context: .
+#           push: true
+#           build-args: SOURCE=${{ env.dir }}
+#           tags: |
+#             882490700787.dkr.ecr.us-east-1.amazonaws.com/connector-${{ env.dir }}:${{env.GITHUB_RUN_NUMBER}}
