@@ -43,10 +43,10 @@ jobs:
         run: go build -v ./...
         working-directory: ./manager
       
-      - name: Turn-on Environment
-        id: turn_on
-        run: docker-compose up -d
-        working-directory: ./manager
+      - name: Run docker-compose
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: "./manager/docker-compose.yml"
       
       - name: Check Containers
         id: check
