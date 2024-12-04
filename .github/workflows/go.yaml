@@ -55,7 +55,7 @@ jobs:
         run: docker ps
         
       - name: End to End Test
-        run: go test ./test/e2e/
+        run: go test ./... -tags e2e
         working-directory: ./manager
 
       - name: Shutdown Containers
