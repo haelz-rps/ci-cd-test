@@ -25,6 +25,10 @@ poetry install --with dev
 
 
 
+
+
+
+
 ### Create credentials
 
 **If you are a community contributor**, follow the instructions in the [documentation](https://docs.airbyte.com/integrations/sources/wordpress)
