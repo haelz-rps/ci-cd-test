@@ -1,0 +1,408 @@
+version: 3.9.6
+
+type: DeclarativeSource
+
+check:
+  type: CheckStream
+  stream_names:
+    - posts
+
+definitions:
+  streams:
+    posts:
+      type: DeclarativeStream
+      name: posts
+      primary_key:
+        - id
+      retriever:
+        type: SimpleRetriever
+        requester:
+          $ref: "#/definitions/base_requester"
+          path: /posts
+          http_method: GET
+          error_handler:
+            type: CompositeErrorHandler
+            error_handlers:
+              - type: DefaultErrorHandler
+                max_retries: 3
+                backoff_strategies:
+                  - type: ExponentialBackoffStrategy
+                    factor: 5
+        record_selector:
+          type: RecordSelector
+          extractor:
+            type: DpathExtractor
+            field_path: []
+        paginator:
+          type: DefaultPaginator
+          page_token_option:
+            type: RequestOption
+            inject_into: request_parameter
+            field_name: "offset"
+          page_size_option:
+            type: RequestOption
+            field_name: "per_page"
+            inject_into: request_parameter
+          pagination_strategy:
+            type: OffsetIncrement
+            page_size: 100
+            inject_on_first_request: true
+      incremental_sync:
+        type: DatetimeBasedCursor
+        cursor_field: modified_gmt
+        cursor_datetime_formats:
+          - "%Y-%m-%dT%H:%M:%S"
+        datetime_format: "%Y-%m-%dT%H:%M:%S"
+        start_datetime:
+          type: MinMaxDatetime
+          datetime: "2020-01-01T00:00:00"
+          datetime_format: "%Y-%m-%dT%H:%M:%S"
+        start_time_option:
+          type: RequestOption
+          inject_into: request_parameter
+          field_name: modified_after
+        end_datetime:
+          type: MinMaxDatetime
+          datetime: "{{ now_utc().strftime('%Y-%m-%dT%H:%M:%S') }}"
+          datetime_format: "%Y-%m-%dT%H:%M:%S"
+      schema_loader:
+        type: InlineSchemaLoader
+        schema:
+          $ref: "#/schemas/posts"
+  base_requester:
+    type: HttpRequester
+    url_base: "{{ config['base_url'] }}/wp-json/wp/v2"
+    authenticator:
+      type: BasicHttpAuthenticator
+      username: "{{ config['username'] }}"
+      password: "{{ config['password'] }}"
+
+streams:
+  - $ref: "#/definitions/streams/posts"
+
+spec:
+  type: Spec
+  connection_specification:
+    type: object
+    $schema: http://json-schema.org/draft-07/schema#
+    required:
+      - per_page
+      - offset
+      - base_url
+      - username
+    properties:
+      per_page:
+        type: integer
+        order: 0
+        title: per_page
+        default: "100"
+      offset:
+        type: integer
+        order: 1
+        title: offset
+        default: "0"
+      base_url:
+        type: string
+        order: 2
+        title: base_url
+      username:
+        type: string
+        title: Username
+        order: 3
+      password:
+        type: string
+        title: Password
+        always_show: true
+        airbyte_secret: true
+        order: 4
+    additionalProperties: true
+
+metadata:
+  autoImportSchema:
+    posts: false
+  yamlComponents:
+    global:
+      - authenticator
+  testedStreams:
+    posts:
+      hasRecords: false
+      streamHash: 23878a6a95e5bac25027245a870b7b140d4feedf
+      hasResponse: false
+      primaryKeysAreUnique: false
+      primaryKeysArePresent: false
+      responsesAreSuccessful: false
+  assist: {}
+
+schemas:
+  posts:
+    type: array
+    $schema: http://json-schema.org/draft-07/schema#
+    items:
+      type: object
+      properties:
+        type:
+          type: string
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        date_gmt:
+          type: string
+          format: date-time
+        guid:
+          type: object
+          properties:
+            rendered:
+              type: string
+              format: uri
+          required:
+            - rendered
+        modified:
+          type: string
+          format: date-time
+        modified_gmt:
+          type: string
+          format: date-time
+        slug:
+          type: string
+        status:
+          type: string
+        link:
+          type: string
+          format: uri
+        title:
+          type: object
+          properties:
+            rendered:
+              type: string
+          required:
+            - rendered
+        content:
+          type: object
+          properties:
+            rendered:
+              type: string
+            protected:
+              type: boolean
+          required:
+            - rendered
+            - protected
+        excerpt:
+          type: object
+          properties:
+            rendered:
+              type: string
+            protected:
+              type: boolean
+          required:
+            - rendered
+            - protected
+        author:
+          type: integer
+        featured_media:
+          type: integer
+        comment_status:
+          type: string
+        ping_status:
+          type: string
+        sticky:
+          type: boolean
+        template:
+          type: string
+        format:
+          type: string
+        meta:
+          type: object
+          properties:
+            footnotes:
+              type: string
+          required:
+            - footnotes
+        categories:
+          type: array
+          items:
+            type: integer
+        tags:
+          type: array
+          items:
+            type: integer
+        class_list:
+          type: array
+          items:
+            type: string
+        _links:
+          type: object
+          properties:
+            self:
+              type: array
+              items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: uri
+                  targetHints:
+                    type: object
+                    properties:
+                      allow:
+                        type: array
+                        items:
+                          type: string
+                    required:
+                      - allow
+                required:
+                  - href
+                  - targetHints
+            collection:
+              type: array
+              items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - href
+            about:
+              type: array
+              items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - href
+            author:
+              type: array
+              items:
+                type: object
+                properties:
+                  embeddable:
+                    type: boolean
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - embeddable
+                  - href
+            replies:
+              type: array
+              items:
+                type: object
+                properties:
+                  embeddable:
+                    type: boolean
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - embeddable
+                  - href
+            version-history:
+              type: array
+              items:
+                type: object
+                properties:
+                  count:
+                    type: integer
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - count
+                  - href
+            predecessor-version:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - id
+                  - href
+            wp:attachment:
+              type: array
+              items:
+                type: object
+                properties:
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - href
+            wp:term:
+              type: array
+              items:
+                type: object
+                properties:
+                  taxonomy:
+                    type: string
+                  embeddable:
+                    type: boolean
+                  href:
+                    type: string
+                    format: uri
+                required:
+                  - taxonomy
+                  - embeddable
+                  - href
+            curies:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  href:
+                    type: string
+                    format: uri-template
+                  templated:
+                    type: boolean
+                required:
+                  - name
+                  - href
+                  - templated
+          required:
+            - self
+            - collection
+            - about
+            - author
+            - replies
+            - version-history
+            - predecessor-version
+            - wp:attachment
+            - wp:term
+            - curies
+      required:
+        - id
+        - date
+        - date_gmt
+        - guid
+        - modified
+        - modified_gmt
+        - slug
+        - status
+        - type
+        - link
+        - title
+        - content
+        - excerpt
+        - author
+        - featured_media
+        - comment_status
+        - ping_status
+        - sticky
+        - template
+        - format
+        - meta
+        - categories
+        - tags
+        - class_list
+        - _links
+    additionalProperties: true

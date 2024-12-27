@@ -1,69 +1,56 @@
-# name: CI - Connectors Tests
+name: Go - Unit Test and Integrations Test
+on:
+  push:
+  # pull_request:
+  #   paths:
+  #     - ./connectors/**
+jobs:
+  E2E_Tests:
+    runs-on: ubuntu-latest
+    name: End to End Teste
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Git Clone
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          ssh-key: '${{ secrets.SSH_PRIVATE_KEY }}'
 
-# on: 
-#   pull_request:
-#     paths:
-#       - connectors/**
+      - name: Get list of changed files
+        id: changes
+        run: |
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- ./connectors/ > changed_files.txt
+          dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
+          echo "dir=$dir" >> "$GITHUB_ENV"
 
-# jobs:
-#   Unit-Test:
-#     runs-on: ubuntu-latest
-#     strategy:
-#       matrix:
-#         test-type: [unit_tests, integration]
-#     name: Connectors Tests
-#     steps:
-#       - name: Setup Git
-#         uses: actions/checkout@v4
-#         with:
-#           fetch-depth: 0
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+        
+      - name: Install poetry
+        run: pipx install poetry pytest
+  
+      - name: Poetry Install Dependencies
+        run: poetry install
+        working-directory: ./connectors/${{ env.dir }}
 
-#       - name: Get list of changed files
-#         id: changes
-#         run: |
-#           git diff --name-only HEAD^ HEAD -- ./connectors/ > changed_files.txt
-#           dir=$(awk -F'/' '{print $2}' changed_files.txt | sort | uniq)
-#           echo "dir=$dir" >> "$GITHUB_ENV"
-#       - name: Create Secret File
-#         id: secret_file
-#         run: |
-#           echo "${{ env.dir }}"
-#           cat <<EOF>>secrets/secrets.json
-#           ${{ secrets.SECRETS_FILE }}
-#           EOF
-#         working-directory: ./connectors/${{ env.dir }}
+      - name: Run docker-compose
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: ./connectors/${{ env.dir }}/docker-compose.yaml
 
-#       - name: Setup Python
-#         uses: actions/setup-python@v5
-#         with:
-#           python-version: '3.9'
+      - name: Check Containers
+        id: check
+        run: docker ps
 
-#       - name: Install poetry
-#         run: pipx install poetry pytest
+      - name: End to End Test
+        run: go test ./... -tags e2e
+        working-directory: ./connectors/${{ env.dir }}
 
-#       - name: Poetry Install Dependencies
-#         run: poetry install
-#         working-directory: ./connectors/${{ env.dir }}
-
-#       - name: Run tests ${{matrix.test-type}}
-#         run: |
-#           if [ "${{matrix.test-type}}" == "unit_tests" ]; then
-#             poetry run pytest --html=report-unit_tests.html unit_tests
-#           elif [ "${{matrix.test-type}}" == "integration" ]; then
-#             poetry run pytest --html=report-integration.html integration_tests
-#           fi
-#         working-directory: ./connectors/${{ env.dir }}
-      
-#       - name: Upload unit test report
-#         if: matrix.test-type == 'unit_tests'
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: report-unit_tests.html
-#           path: ./connectors/${{env.dir}}/report-unit_tests.html
-
-#       - name: Upload integration test report
-#         if: matrix.test-type == 'integration'
-#         uses: actions/upload-artifact@v4
-#         with:
-#           name: report-integration_tests.html
-#           path: ./connectors/${{env.dir}}/report-integration.html
+      - name: Shutdown Containers
+        id: shutdown
+        run: docker-compose down
+        working-directory: ./connectors/${{ env.dir }}

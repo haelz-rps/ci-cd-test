@@ -1,8 +1,9 @@
 name: Go
 
 on:
-  push:
-    branches: [ "main" ]
+  pull_request:
+    paths:
+      - manager/**
 
 jobs:
   Unit_Test:
@@ -34,6 +35,11 @@ jobs:
     steps:
       - name: Git Clone
         uses: actions/checkout@v4
+
+      - name: Auth Github
+        id: auth_github
+        run: git config --global url."https://git:${{ secrets.GH_TOKEN }}@github.com/Ubix".insteadOf "https://github.com/Ubix"
+        shell: sh
 
       - name: Git Submodules
         run: git submodule update --init --recursive
