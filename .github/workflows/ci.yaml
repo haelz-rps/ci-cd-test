@@ -51,7 +51,7 @@ jobs:
 
       - name: Check Docker Compose file
         run: |
-          if [ -f "docker-compose.yaml" ]; then
+          if [ -e "docker-compose.yaml" ]; then
             echo "Docker Compose exists. Start up..."
             docker-compose up -d
           else
