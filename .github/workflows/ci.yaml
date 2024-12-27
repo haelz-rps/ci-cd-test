@@ -33,7 +33,7 @@ jobs:
         run: |
           echo "${{ env.dir }}"
           cat <<EOF>>secrets/secrets.json
-          ${{ secrets.SECRETS_FILE }}
+          ${{ secrets.SECRET_FILE }}
           EOF
         working-directory: ./connectors/${{ env.dir }}
 
