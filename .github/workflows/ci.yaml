@@ -49,12 +49,23 @@ jobs:
         run: poetry install
         working-directory: ./connectors/${{ env.dir }}
 
+      - name: Check Docker Compose file
+        id: check_file
+        run: |
+          if [ -e "docker-compose.yaml" ]; then
+            echo "check_result=true" >> $GITHUB_OUTPUT
+          else
+            echo "check_result=false" >> $GITHUB_OUTPUT
+          fi
+        working-directory: ./connectors/${{ env.dir }}
+        continue-on-error: true
+
       - name: Run docker-compose
-        if: ${{ hashFiles('./connectors/env.dir/docker-compose.yaml') }}
+        if: steps.check_file.outputs.check_result == 'true'
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: "./connectors/${{ env.dir }}/docker-compose.yaml"
-        
+
       - name: Run tests ${{matrix.test-type}}
         run: |
           if [ "${{matrix.test-type}}" == "unit_tests" ]; then
