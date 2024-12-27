@@ -74,17 +74,22 @@ jobs:
             poetry run pytest --html=report-integration.html integration_tests
           fi
         working-directory: ./connectors/${{ env.dir }}
-      
+
       - name: Upload unit test report
         if: matrix.test-type == 'unit_tests'
         uses: actions/upload-artifact@v4
         with:
-          name: report-unit_tests.html
-          path: ./connectors/${{env.dir}}/report-unit_tests.html
+          path: ./connectors/${{env.dir}}/*.html
+      # - name: Upload unit test report
+      #   if: matrix.test-type == 'unit_tests'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: report-unit_tests.html
+      #     path: ./connectors/${{env.dir}}/report-unit_tests.html
 
-      - name: Upload integration test report
-        if: matrix.test-type == 'integration'
-        uses: actions/upload-artifact@v4
-        with:
-          name: report-integration_tests.html
-          path: ./connectors/${{env.dir}}/report-integration.html
+      # - name: Upload integration test report
+      #   if: matrix.test-type == 'integration'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: report-integration_tests.html
+      #     path: ./connectors/${{env.dir}}/report-integration.html
