@@ -2,6 +2,8 @@ name: CI - Connectors Tests
 
 on: 
   push:
+    paths:
+      - connectors/**
   # pull_request:
   #   paths:
   #     - connectors/**
@@ -55,6 +57,7 @@ jobs:
           else
             echo "Docker Compose doesn't exists. Skipping..."
         working-directory: ./connectors/${{ env.dir }}
+        continue-on-error: true
 
       - name: Run tests ${{matrix.test-type}}
         run: |
