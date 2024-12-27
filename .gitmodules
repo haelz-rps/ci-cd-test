@@ -1,6 +1,0 @@
-[submodule "manager/docker/hive"]
-	path = manager/docker/hive
-	url = git@github.com:Ubix/hive.git
-[submodule "manager/docker/spark"]
-	path = manager/docker/spark
-	url = git@github.com:Ubix/spark.git
