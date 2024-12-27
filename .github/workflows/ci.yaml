@@ -56,6 +56,7 @@ jobs:
             docker-compose up -d
           else
             echo "Docker Compose doesn't exists. Skipping..."
+          fi
         working-directory: ./connectors/${{ env.dir }}
         continue-on-error: true
 
