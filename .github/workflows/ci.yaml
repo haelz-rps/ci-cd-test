@@ -50,12 +50,11 @@ jobs:
         working-directory: ./connectors/${{ env.dir }}
 
       - name: Run docker-compose
-        if: ${{ hashFiles('docker-compose.yaml') }}
+        if: ${{ hashFiles('./connectors/env.dir/docker-compose.yaml') }}
         uses: hoverkraft-tech/compose-action@v2.0.1
         with:
           compose-file: "./connectors/${{ env.dir }}/docker-compose.yaml"
         
-
       - name: Run tests ${{matrix.test-type}}
         run: |
           if [ "${{matrix.test-type}}" == "unit_tests" ]; then
