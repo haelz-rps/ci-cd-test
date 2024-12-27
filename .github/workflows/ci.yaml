@@ -49,16 +49,12 @@ jobs:
         run: poetry install
         working-directory: ./connectors/${{ env.dir }}
 
-      - name: Check Docker Compose file
-        run: |
-          if [ -e "docker-compose.yaml" ]; then
-            echo "Docker Compose exists. Start up..."
-            docker-compose up -d
-          else
-            echo "Docker Compose doesn't exists. Skipping..."
-          fi
-        working-directory: ./connectors/${{ env.dir }}
-        continue-on-error: true
+      - name: Run docker-compose
+        if: ${{ hashFiles('docker-compose.yaml') }}
+        uses: hoverkraft-tech/compose-action@v2.0.1
+        with:
+          compose-file: "./connectors/${{ env.dir }}/docker-compose.yaml"
+        
 
       - name: Run tests ${{matrix.test-type}}
         run: |
